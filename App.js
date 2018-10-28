@@ -1,15 +1,42 @@
 import React from 'react';
+import * as firebase from 'firebase';
+
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { AppLoading, Asset, Font, Icon } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBMK-8541Z0oRDzh8ITIjxSxKEj3GtDoeo",
+  authDomain: "rspace-b6656.firebaseapp.com",
+  projectId: "rspace-b6656",
+  databaseURL: "https://rspace-b6656.firebaseio.com",
+  storageBucket: "rspace-b6656.appspot.com"
+};
+
 export default class App extends React.Component {
   state = {
+    isAuthVerified: false,
     isLoadingComplete: false,
   };
 
+  componentDidMount() {
+    firebase.initializeApp(firebaseConfig);
+    this.authSubscription = firebase.auth().onAuthStateChanged((user) => {
+      console.log(user);
+      this.setState({
+        isAuthVerified: true,
+        user,
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    this.authSubscription();
+  }
+
+
   render() {
-    if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
+    if ((!this.state.isLoadingComplete || !this.state.isAuthVerified) && !this.props.skipLoadingScreen) {
       return (
         <AppLoading
           startAsync={this._loadResourcesAsync}
@@ -30,8 +57,7 @@ export default class App extends React.Component {
   _loadResourcesAsync = async () => {
     return Promise.all([
       Asset.loadAsync([
-        require('./assets/images/robot-dev.png'),
-        require('./assets/images/robot-prod.png'),
+        require('./assets/images/logo.jpg'),
       ]),
       Font.loadAsync({
         // This is the font that we are using for our tab bar

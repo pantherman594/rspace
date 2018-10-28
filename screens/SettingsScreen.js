@@ -1,14 +1,25 @@
 import React from 'react';
-import { ExpoConfigView } from '@expo/samples';
+import {
+  Button,
+} from 'react-native'
+import * as firebase from 'firebase';
 
 export default class SettingsScreen extends React.Component {
   static navigationOptions = {
-    title: 'app.json',
+    title: 'Settings',
   };
 
   render() {
     /* Go ahead and delete ExpoConfigView and replace it with your
      * content, we just wanted to give you a quick view of your config */
-    return <ExpoConfigView />;
+
+    return <Button onPress={this.logOut} title="Log out" />
+    //return <ExpoConfigView />;
   }
+
+  logOut = () => {
+    firebase.auth().signOut().then(() => {
+      this.props.navigation.navigate('AuthLoading');
+    });
+  };
 }

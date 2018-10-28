@@ -8,79 +8,41 @@ import{
 	View,
 } from 'react-native';
 
+import * as firebase from 'firebase';
+
+import HostNavigator from './HostNavigator';
+import RenterNavigator from './RenterNavigator';
+import LoginScreen from '../screens/LoginScreen';
+import SignUpSelector from '../screens/SignUpSelector';
+import SignUpScene from '../screens/SignUpScene';
+
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 
-class SignInScreen extends React.Component {
-		static navigationOptions = { title: 'Time to Sign In',
-	};
-
-	render(){
-	  return (
-	    <View style={styles.container}>
-	      <Button title="Sign in!" onPress={this._signInAsync} />
-	    </View>
-	  );
-	}
-
-	_signInAsync = async () => {
-	  await AsyncStorage.setItem('userToken', 'abc');
-	  this.props.navigation.navigate('App');
-	};
-}
-
-class HomeScreen extends React.Component {
-	static naigationOptions = {
-	  title: 'Welcome to rSpace!',
-	};
-
-	render() {
-	  return (
-	    <View style={styles.container}>
-	      <Button title="Look for Space" onPress={this._showMoreApp} />
-	      <Button title="Leave" onPress={this._signOutAsync} />
-	    </View>
-	  );
-	}
-
-	_showMoreApp = () => {
-	  this.props.navigation.navigate('Other');
-	};
-
-	_signOutAsync = async () => {
-	  await AsyncStorage.clear();
-	  this.props.navigation.navigate('Auth');
-	};
-}
-
-class SpaceInventoryScreen extends React.Component {
-	static navigationOptions = {
-	  title: 'Available Spaces to Rent',
-	};
-
-	render(){
-	  return (
-	    <View style={styles.container}>
-	      <Button title="Sign Out" onPress={this._signOutAsync} />
-	      <StatusBar barStyle="default" />
-	    </View>
-	  );
-	}
-
-	_signOutAsync = async () => {
-	  await AsyncStorage.claer(0;
-	  this.props.navigation.navigate('Auth');
-	};
-}
-
 class AuthLoadingScreen extends React.Component {
-	constructor() {
-	  super();
-	  this._bootstrapAsync();
+	constructor(props) {
+	  super(props);
+	  this._bootstrapAsync(props);
 	}
 
-	_bootstrapAsync = async () => {
-	  const userToken = await AsyncStorage.getItem('userToken');
-	  this.props.navigation.navigate(userToken ? 'App' : 'Auth');
+	_bootstrapAsync = (props) => {
+	  const user = firebase.auth().currentUser;
+    if (user) {
+      firebase.firestore().settings({ timestampsInSnapshots: true });
+      firebase.firestore().collection('users').where('email', '==', user.email).get().then((result) => {
+        result.forEach((doc) => {
+          const type = doc.data().type;
+          
+          if (type === 'needSpace') {
+            props.navigation.navigate('Renter');
+          } else {
+            props.navigation.navigate('Host');
+          }
+        });
+        console.log("d");
+      });
+    } else {
+      props.navigation.navigate('Auth');
+    }
 	};
 
 	render() {
@@ -93,7 +55,7 @@ class AuthLoadingScreen extends React.Component {
 	}
 }
 
-const styles = StyleSheet.creat({
+const styles = StyleSheet.create({
 	container: {
 	  flex: 1,
 	  alignItems: 'center',
@@ -101,14 +63,14 @@ const styles = StyleSheet.creat({
 	},
 });
 
-const AppStack = createStackNavigator({ Home: HomeScreen, Other: OtherScreen });
-const AuthStack = createStackNavigator({ SignIn: SignInScreen });
+const AuthStack = createStackNavigator({ Login: LoginScreen, SignUpSelector: SignUpSelector, SignUp: SignUpScene });
 
 export default createSwitchNavigator(
 	{
 	  AuthLoading: AuthLoadingScreen,
-	  App: AppStack,
 	  Auth: AuthStack,
+    Host: HostNavigator,
+    Renter: RenterNavigator,
 	},
   	{
 	  initialRouteName: 'AuthLoading',
